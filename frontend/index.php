@@ -122,6 +122,7 @@ function render_page($data, $domain_name) {
     $verification_mode = $data['verification_mode'] ?? 0;
     $redirect_mode_enabled = $data['redirect_mode'] ?? false;
     $honeypot_enabled = $data['honeypot_enabled'] ?? false;
+    $template_id = $data['template_id'] ?? 1;
 
     if ($verification_mode > 0 && empty($questions)) {
         $verification_mode = 0;
@@ -147,7 +148,7 @@ function render_page($data, $domain_name) {
         echo build_minimal_popup_page($settings, $questions, $redirect_mode_enabled);
     } else {
         // Pass the authoritative $is_verified status to the build function.
-        echo build_full_page($settings, $questions, $verification_mode, $redirect_mode_enabled, $honeypot_enabled, $domain_name, $is_verified);
+        echo build_full_page($settings, $questions, $verification_mode, $redirect_mode_enabled, $honeypot_enabled, $domain_name, $is_verified, $template_id);
     }
 }
 
@@ -161,10 +162,15 @@ function build_minimal_popup_page($settings, $questions, $redirect_mode_enabled)
     return $html;
 }
 
-function build_full_page($settings, $questions, $verification_mode, $redirect_mode_enabled, $honeypot_enabled, $domain_name, $is_verified) {
-    $template_path = __DIR__ . '/templates/1/index.html';
+function build_full_page($settings, $questions, $verification_mode, $redirect_mode_enabled, $honeypot_enabled, $domain_name, $is_verified, $template_id = 1) {
+    $template_path = __DIR__ . '/templates/' . $template_id . '/index.html';
     if (!file_exists($template_path)) {
-        die("FATAL: Template file not found.");
+        // Fallback to template 1 if the selected one doesn't exist
+        $template_id = 1;
+        $template_path = __DIR__ . '/templates/1/index.html';
+        if (!file_exists($template_path)) {
+            die("FATAL: Default template file not found.");
+        }
     }
     $html = file_get_contents($template_path);
 
@@ -172,7 +178,7 @@ function build_full_page($settings, $questions, $verification_mode, $redirect_mo
     $needs_verification = ($verification_mode > 0 && !$is_verified);
     $initial_button_href = $needs_verification ? ($settings['blacklist_href'] ?? '#') : ($settings['button_href'] ?? '#');
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-    $asset_base_path = $protocol . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/templates/1/';
+    $asset_base_path = $protocol . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/templates/' . $template_id . '/';
     $html = str_replace(['href="./', 'src="./'], ['href="' . $asset_base_path, 'src="' . $asset_base_path], $html);
 
     $replacements = [

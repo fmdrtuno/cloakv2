@@ -16,7 +16,7 @@ if (empty($api_key) || empty($domain_name)) {
 }
 
 // Authenticate the domain and API key
-$stmt = $mysqli->prepare("SELECT id, stealth_mode, redirect_mode, honeypot_enabled, verification_mode FROM domains WHERE domain_name = ? AND api_key = ?");
+$stmt = $mysqli->prepare("SELECT id, stealth_mode, redirect_mode, honeypot_enabled, verification_mode, template_id FROM domains WHERE domain_name = ? AND api_key = ?");
 $stmt->bind_param("ss", $domain_name, $api_key);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -98,6 +98,7 @@ switch ($action) {
             'redirect_mode' => (bool)$domain['redirect_mode'],
             'honeypot_enabled' => (bool)$domain['honeypot_enabled'],
             'verification_mode' => (int)($domain['verification_mode'] ?? 0),
+            'template_id' => (int)($domain['template_id'] ?? 1),
             'country_code' => $country_code,
             'contact_name' => $settings['contact_name'] ?? '',
             'contact_address' => $settings['contact_address'] ?? '',

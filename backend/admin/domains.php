@@ -6,6 +6,20 @@ if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     exit;
 }
 
+// Function to get available templates
+function get_available_templates() {
+    $template_dirs = glob(__DIR__ . '/../../frontend/templates/*', GLOB_ONLYDIR);
+    $templates = [];
+    foreach ($template_dirs as $dir) {
+        if (is_numeric(basename($dir))) {
+            $templates[] = basename($dir);
+        }
+    }
+    sort($templates, SORT_NUMERIC);
+    return $templates;
+}
+$available_templates = get_available_templates();
+
 // Hàm tạo API key ngẫu nhiên
 function generate_api_key() {
     return bin2hex(random_bytes(16));
@@ -56,7 +70,7 @@ $stealth_filter = $_GET['stealth_mode'] ?? '';
 $params = [];
 $types = '';
 
-$sql = "SELECT d.id, d.domain_name, d.api_key, d.stealth_mode, d.redirect_mode, d.honeypot_enabled, d.verification_mode, u.username as owner FROM domains d LEFT JOIN users u ON d.user_id = u.id";
+$sql = "SELECT d.id, d.domain_name, d.api_key, d.stealth_mode, d.redirect_mode, d.honeypot_enabled, d.verification_mode, d.template_id, u.username as owner FROM domains d LEFT JOIN users u ON d.user_id = u.id";
 
 $where_clauses = [];
 if ($_SESSION['role'] === 'user') {
@@ -135,7 +149,6 @@ require_once 'templates/header.php';
 <?php
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
-// Đi lên một cấp từ /admin để đến thư mục /php_project
 $api_path = dirname(dirname($_SERVER['PHP_SELF'])); 
 $full_api_url = $protocol . $host . rtrim($api_path, '/') . '/';
 ?>
@@ -253,6 +266,7 @@ $full_api_url = $protocol . $host . rtrim($api_path, '/') . '/';
                                 <th scope="col">Redirect Mode</th>
                                 <th scope="col">Honeypot</th>
                                 <th scope="col">Chế độ xác thực</th>
+                                <th scope="col">Template</th>
                                 <th scope="col">Hành động</th>
                             </tr>
                         </thead>
@@ -293,6 +307,15 @@ $full_api_url = $protocol . $host . rtrim($api_path, '/') . '/';
                                     </select>
                                 </td>
                                 <td>
+                                    <select class="form-select template-select" data-domain-id="<?php echo $domain['id']; ?>">
+                                        <?php foreach ($available_templates as $template_id): ?>
+                                            <option value="<?php echo $template_id; ?>" <?php echo ($domain['template_id'] == $template_id) ? 'selected' : ''; ?>>
+                                                Template <?php echo $template_id; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td>
                                     <div class="btn-group" role="group" aria-label="Domain Actions">
                                         <a href="index.php?domain_id=<?php echo $domain['id']; ?>" class="btn btn-outline-secondary" title="Cài đặt chung">
                                             <i class="bi bi-gear-fill fs-5"></i>
@@ -329,7 +352,6 @@ $full_api_url = $protocol . $host . rtrim($api_path, '/') . '/';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Use a dynamically generated base URL to ensure requests are sent to the correct path.
     const adminApiBaseUrl = '<?php echo rtrim(dirname($_SERVER['PHP_SELF']), '/') . '/'; ?>';
 
     function createToggleHandler(selector, url, errorMessage) {
@@ -339,33 +361,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 const domainId = this.dataset.domainId;
                 const enabled = this.checked;
 
-                // Prepend the base URL to the endpoint.
                 fetch(adminApiBaseUrl + url, {
                     method: 'POST',
-                    credentials: 'same-origin', // Ensures session cookies are sent.
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: `domain_id=${domainId}&status=${enabled ? 1 : 0}`
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        // Log detailed error for debugging.
-                        console.error(`HTTP error! Status: ${response.status}`, response);
-                        throw new Error('Server responded with an error.');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (!data.success) {
-                        // Display specific error from backend if available.
                         alert(data.error || errorMessage);
                         this.checked = !enabled;
                     }
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
-                    alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console để biết thêm chi tiết.');
+                    alert('Đã xảy ra lỗi kết nối.');
                     this.checked = !enabled;
                 });
             });
@@ -382,22 +395,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const domainId = this.dataset.domainId;
             const mode = this.value;
 
-            // Prepend the base URL to the endpoint.
-            fetch(adminApiBaseUrl + 'toggle_verification_mode.php', {
+            fetch(adminApiBase_url + 'toggle_verification_mode.php', {
                 method: 'POST',
-                credentials: 'same-origin', // Ensures session cookies are sent.
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: `domain_id=${domainId}&status=${mode}`
             })
-            .then(response => {
-                if (!response.ok) {
-                    console.error(`HTTP error! Status: ${response.status}`, response);
-                    throw new Error('Server responded with an error.');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (!data.success) {
                     alert(data.error || 'Lỗi: Không thể cập nhật chế độ xác thực.');
@@ -405,7 +411,35 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('Fetch Error:', error);
-                alert('Đã xảy ra lỗi kết nối. Vui lòng kiểm tra console để biết thêm chi tiết.');
+                alert('Đã xảy ra lỗi kết nối.');
+            });
+        });
+    });
+
+    // Handler for template selection
+    const templateSelects = document.querySelectorAll('.template-select');
+    templateSelects.forEach(s => {
+        s.addEventListener('change', function () {
+            const domainId = this.dataset.domainId;
+            const templateId = this.value;
+
+            fetch(adminApiBaseUrl + 'update_template.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `domain_id=${domainId}&template_id=${templateId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert(data.error || 'Lỗi: Không thể cập nhật template.');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                alert('Đã xảy ra lỗi kết nối.');
             });
         });
     });

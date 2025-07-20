@@ -97,6 +97,7 @@ function setup_initial_tables($mysqli) {
           `redirect_mode` tinyint(1) NOT NULL DEFAULT 0,
           `honeypot_enabled` tinyint(1) NOT NULL DEFAULT 0,
           `verification_mode` int(11) NOT NULL DEFAULT 0,
+          `template_id` int(11) NOT NULL DEFAULT 1,
           PRIMARY KEY (`id`),
           UNIQUE KEY `domain_name` (`domain_name`),
           KEY `user_id` (`user_id`),
