@@ -63,6 +63,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <i class="bi bi-file-earmark-text-fill"></i> Quản lý Mẫu Chặn
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_page == 'status.php') ? 'active' : ''; ?>" href="status.php">
+                    <i class="bi bi-hdd-network-fill"></i> Trạng thái hệ thống
+                </a>
+            </li>
             <?php endif; ?>
             <!-- Các liên kết khác sẽ được truy cập từ trang quản lý domain -->
 <li class="nav-item">
