@@ -1,0 +1,106 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+  color: #000;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+  background-color: #f5f5f5;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.contact-info {
+    background: #ffffff;
+    padding: 1rem;
+    text-align: left;
+    max-width: 450px;
+    width: 100%;
+    border-top: 3px solid #c82333;
+}
+
+.contact-info h3 {
+   display: none;
+}
+
+.contact-info div {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.contact-info div:last-child {
+    margin-bottom: 0;
+}
+
+.contact-info strong {
+    font-weight: 600;
+    color: #333;
+    margin-right: 8px;
+}
+
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+}
+
+.app {
+  background: url(./images/bg.webp) no-repeat center center;
+  background-size: cover;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+  height: 100vh;
+}
+
+.title {
+  width: 90%;
+}
+
+.btn {
+  width: 90%;
+}
+
+@keyframes scaleAnimation {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.btn a img {
+  animation: scaleAnimation 1.5s infinite ease-in-out;
+}
+
+@media screen and (max-width: 768px) {
+    .app {
+        max-width: 100%;
+    }
+    .contact-info {
+        max-width: 100%;
+        border-radius: 0;
+    }
+}
