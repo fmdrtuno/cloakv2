@@ -2,8 +2,5 @@
 composer.phar
 vendor/
 
-# Cache
-backend/cache/
-
 # Frontend
 frontend/
