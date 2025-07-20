@@ -1,6 +1,6 @@
 <?php
+require_once __DIR__ . '/../config/config.php'; // Include main config
 require_once __DIR__ . '/templates/header.php';
-// config.php is already included by header.php
 ?>
 
 <div class="container mt-4">
